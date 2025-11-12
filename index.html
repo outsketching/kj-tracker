@@ -22,9 +22,9 @@
         }
         .container { max-width: 28rem; margin: 0 auto; padding: 1rem; }
         .card { 
-            background: linear-gradient(145deg, #f0f6fe, #ebf2fd);
+            background: linear-gradient(145deg, #f2f8ff, #edf5ff);
             border-radius: 1.5rem; 
-            box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.9);
+            box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.7);
             padding: 1.5rem; 
             margin-bottom: 1.5rem; 
         }
@@ -37,9 +37,9 @@
             font-weight: 600; 
             cursor: pointer; 
             transition: all 0.3s; 
-            background: linear-gradient(145deg, #f0f6fe, #ebf2fd);
+            background: linear-gradient(145deg, #f2f8ff, #edf5ff);
             color: #6b7280;
-            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.9);
+            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.7);
         }
         .tab:active { 
             box-shadow: inset 3px 3px 7px rgba(163, 177, 198, 0.6), inset -3px -3px 7px rgba(255, 255, 255, 0.5);
@@ -92,9 +92,9 @@
             font-weight: 600; 
             cursor: pointer; 
             transition: all 0.2s; 
-            background: linear-gradient(145deg, #f0f6fe, #ebf2fd);
+            background: linear-gradient(145deg, #f2f8ff, #edf5ff);
             color: #374151;
-            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.9);
+            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.7);
             text-transform: uppercase;
             font-size: 0.75rem;
             letter-spacing: 0.05em;
@@ -134,7 +134,7 @@
             justify-content: center; 
             gap: 0.5rem; 
             margin-top: 1rem;
-            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.9);
+            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.7);
         }
         .btn-primary:active { 
             box-shadow: inset 3px 3px 7px rgba(105, 135, 254, 0.8), inset -3px -3px 7px rgba(132, 158, 254, 0.8);
@@ -144,10 +144,10 @@
             align-items: center; 
             justify-content: space-between; 
             padding: 1rem; 
-            background: linear-gradient(145deg, #f0f6fe, #ebf2fd);
+            background: linear-gradient(145deg, #f2f8ff, #edf5ff);
             border-radius: 0.75rem; 
             margin-bottom: 0.75rem;
-            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.9);
+            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.7);
         }
         .meal-info { display: flex; align-items: center; gap: 0.75rem; }
         .meal-emoji { font-size: 1.5rem; }
@@ -159,13 +159,13 @@
             margin-right: 0.75rem; 
         }
         .btn-delete { 
-            background: linear-gradient(145deg, #f0f6fe, #ebf2fd);
+            background: linear-gradient(145deg, #f2f8ff, #edf5ff);
             border: none; 
             color: #ef4444; 
             cursor: pointer; 
             padding: 0.5rem;
             border-radius: 0.5rem;
-            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.9);
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.7);
         }
         .btn-delete:active { 
             box-shadow: inset 2px 2px 5px rgba(163, 177, 198, 0.6), inset -2px -2px 5px rgba(255, 255, 255, 0.5);
@@ -301,8 +301,9 @@
 
             const loadMeals = () => {
                 try {
-                    const today = new Date().toISOString().split('T')[0];
-                    const stored = localStorage.getItem(`meals:${today}`);
+                    const today = new Date();
+                    const dateKey = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear().toString().slice(-2)}`;
+                    const stored = localStorage.getItem(`meals:${dateKey}`);
                     if (stored) {
                         setMeals(JSON.parse(stored));
                     }
@@ -313,8 +314,9 @@
 
             const saveMeals = (updatedMeals) => {
                 try {
-                    const today = new Date().toISOString().split('T')[0];
-                    localStorage.setItem(`meals:${today}`, JSON.stringify(updatedMeals));
+                    const today = new Date();
+                    const dateKey = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear().toString().slice(-2)}`;
+                    localStorage.setItem(`meals:${dateKey}`, JSON.stringify(updatedMeals));
                 } catch (error) {
                     console.error('Error saving meals:', error);
                 }
@@ -345,16 +347,23 @@
                     return;
                 }
 
+                const today = new Date();
+                const dateStr = `${today.getDate().toString().padStart(2, '0')}/${(today.getMonth() + 1).toString().padStart(2, '0')}/${today.getFullYear().toString().slice(-2)}`;
+
                 const entry = {
                     id: Date.now(),
                     weight: Number(newWeight),
-                    date: new Date().toISOString().split('T')[0],
-                    displayDate: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    date: dateStr,
+                    displayDate: `${today.getDate()} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][today.getMonth()]}`
                 };
 
-                const updatedEntries = [...weightEntries, entry].sort((a, b) => 
-                    new Date(a.date) - new Date(b.date)
-                );
+                const updatedEntries = [...weightEntries, entry].sort((a, b) => {
+                    const [dayA, monthA, yearA] = a.date.split('/').map(Number);
+                    const [dayB, monthB, yearB] = b.date.split('/').map(Number);
+                    const dateA = new Date(2000 + yearA, monthA - 1, dayA);
+                    const dateB = new Date(2000 + yearB, monthB - 1, dayB);
+                    return dateA - dateB;
+                });
                 
                 setWeightEntries(updatedEntries);
                 saveWeightEntries(updatedEntries);
