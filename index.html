@@ -209,6 +209,28 @@
         }
         .stat-unit { font-size: 1.125rem; color: #9ca3af; margin-left: 0.25rem; }
         .chart-container { height: 200px; margin-top: 1rem; }
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: linear-gradient(145deg, #d8e7f7, #d3e2f4);
+            border-radius: 0.75rem;
+            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.4);
+        }
+        .checkbox-container input[type="checkbox"] {
+            width: auto;
+            cursor: pointer;
+            margin: 0;
+            box-shadow: none;
+        }
+        .checkbox-label {
+            flex: 1;
+            font-size: 0.875rem;
+            color: #4b5563;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body>
@@ -299,7 +321,7 @@
         }
 
         function KilojouleTracker() {
-            const DAILY_LIMIT = 6500;
+            const DAILY_LIMIT_DEFAULT = 6500;
             const [meals, setMeals] = useState([]);
             const [mealType, setMealType] = useState('Breakfast');
             const [kilojoules, setKilojoules] = useState('');
@@ -308,10 +330,14 @@
             const [newWeight, setNewWeight] = useState('');
             const [showWeightSection, setShowWeightSection] = useState(false);
             const [showCalories, setShowCalories] = useState(false);
+            const [showSettings, setShowSettings] = useState(false);
+            const [dailyLimit, setDailyLimit] = useState(DAILY_LIMIT_DEFAULT);
+            const [adaptiveMode, setAdaptiveMode] = useState(false);
 
             useEffect(() => {
                 loadMeals();
                 loadWeightEntries();
+                loadSettings();
             }, []);
 
             const loadMeals = () => {
@@ -356,6 +382,54 @@
                 }
             };
 
+            const loadSettings = () => {
+                try {
+                    const stored = localStorage.getItem('settings');
+                    if (stored) {
+                        const settings = JSON.parse(stored);
+                        setDailyLimit(settings.dailyLimit || DAILY_LIMIT_DEFAULT);
+                        setAdaptiveMode(settings.adaptiveMode || false);
+                    }
+                } catch (error) {
+                    console.log('No settings found');
+                }
+            };
+
+            const saveSettings = (newLimit, newAdaptiveMode) => {
+                try {
+                    const settings = { 
+                        dailyLimit: newLimit !== undefined ? newLimit : dailyLimit,
+                        adaptiveMode: newAdaptiveMode !== undefined ? newAdaptiveMode : adaptiveMode
+                    };
+                    localStorage.setItem('settings', JSON.stringify(settings));
+                    if (newLimit !== undefined) setDailyLimit(newLimit);
+                    if (newAdaptiveMode !== undefined) setAdaptiveMode(newAdaptiveMode);
+                } catch (error) {
+                    console.error('Error saving settings:', error);
+                }
+            };
+
+            const getAdaptiveDailyLimit = () => {
+                if (!adaptiveMode) return dailyLimit;
+                
+                const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+                const isWeekday = today >= 1 && today <= 4; // Monday to Thursday
+                
+                const weekdayReduction = Math.round(dailyLimit * 0.0769); // 7.69% reduction
+                
+                if (isWeekday) {
+                    return dailyLimit - weekdayReduction;
+                } else {
+                    // Friday (5), Saturday (6), Sunday (0)
+                    const totalSaved = weekdayReduction * 4; // Total from 4 weekdays
+                    const weekendAddition = totalSaved / 3; // Split across 3 weekend days
+                    const weekendLimit = dailyLimit + weekendAddition;
+                    return Math.round(weekendLimit / 50) * 50; // Round to nearest 50
+                }
+            };
+
+            const currentDailyLimit = getAdaptiveDailyLimit();
+
             const addWeightEntry = () => {
                 if (!newWeight || isNaN(newWeight) || Number(newWeight) <= 0) {
                     alert('Please enter a valid weight');
@@ -392,7 +466,7 @@
             };
 
             const totalKJ = meals.reduce((sum, meal) => sum + meal.kj, 0);
-            const remaining = DAILY_LIMIT - totalKJ;
+            const remaining = currentDailyLimit - totalKJ;
 
             const addMeal = () => {
                 let kjValue = 0;
@@ -444,20 +518,76 @@
                 <div className="container">
                     <div className="card tabs">
                         <button
-                            onClick={() => setShowWeightSection(false)}
-                            className={`tab ${!showWeightSection ? 'active' : ''}`}
+                            onClick={() => {
+                                setShowWeightSection(false);
+                                setShowSettings(false);
+                            }}
+                            className={`tab ${!showWeightSection && !showSettings ? 'active' : ''}`}
                         >
                             🍽️ Today
                         </button>
                         <button
-                            onClick={() => setShowWeightSection(true)}
-                            className={`tab ${showWeightSection ? 'active' : ''}`}
+                            onClick={() => {
+                                setShowWeightSection(true);
+                                setShowSettings(false);
+                            }}
+                            className={`tab ${showWeightSection && !showSettings ? 'active' : ''}`}
                         >
                             📊 Weight
                         </button>
+                        <button
+                            onClick={() => {
+                                setShowWeightSection(false);
+                                setShowSettings(true);
+                            }}
+                            className={`tab ${showSettings ? 'active' : ''}`}
+                        >
+                            ⚙️ Settings
+                        </button>
                     </div>
 
-                    {!showWeightSection ? (
+                    {showSettings ? (
+                        <>
+                            <div className="card">
+                                <h3>Daily Limit</h3>
+                                <label>Set your daily kilojoule limit</label>
+                                <input
+                                    type="number"
+                                    value={dailyLimit}
+                                    onChange={(e) => {
+                                        const value = Number(e.target.value);
+                                        if (value > 0) {
+                                            saveSettings(value, undefined);
+                                        }
+                                    }}
+                                    placeholder="Enter daily kJ limit"
+                                />
+                                <div style={{marginTop: '0.75rem', color: '#6b7280', fontSize: '0.875rem', textAlign: 'center'}}>
+                                    = {Math.round(dailyLimit / 4.184).toLocaleString()} calories per day
+                                </div>
+                                
+                                <div className="checkbox-container">
+                                    <input
+                                        type="checkbox"
+                                        id="adaptive-mode"
+                                        checked={adaptiveMode}
+                                        onChange={(e) => saveSettings(undefined, e.target.checked)}
+                                    />
+                                    <label htmlFor="adaptive-mode" className="checkbox-label">
+                                        Adaptive Mode - Higher kJ Limit on Weekends
+                                    </label>
+                                </div>
+                                
+                                {adaptiveMode && (
+                                    <div style={{marginTop: '0.75rem', padding: '0.75rem', background: 'linear-gradient(145deg, #d8e7f7, #d3e2f4)', borderRadius: '0.75rem', fontSize: '0.875rem', color: '#4b5563'}}>
+                                        <div style={{fontWeight: '600', marginBottom: '0.5rem'}}>Adaptive Limits:</div>
+                                        <div>Mon-Thu: {(dailyLimit - Math.round(dailyLimit * 0.0769)).toLocaleString()} kJ ({Math.round((dailyLimit - Math.round(dailyLimit * 0.0769)) / 4.184).toLocaleString()} cal)</div>
+                                        <div>Fri-Sun: {Math.round((dailyLimit + (Math.round(dailyLimit * 0.0769) * 4 / 3)) / 50) * 50} kJ ({Math.round(Math.round((dailyLimit + (Math.round(dailyLimit * 0.0769) * 4 / 3)) / 50) * 50 / 4.184).toLocaleString()} cal)</div>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    ) : !showWeightSection ? (
                         <>
                             <div className="card remaining-display">
                                 <div className="remaining-label">
@@ -472,12 +602,12 @@
                                 <div className="remaining-unit">{showCalories ? 'calories' : 'kJ'}</div>
                                 <div className="progress-bar">
                                     <div 
-                                        className={`progress-fill ${totalKJ > DAILY_LIMIT ? 'over' : 'good'}`}
-                                        style={{ width: `${Math.min((totalKJ / DAILY_LIMIT) * 100, 100)}%` }}
+                                        className={`progress-fill ${totalKJ > currentDailyLimit ? 'over' : 'good'}`}
+                                        style={{ width: `${Math.min((totalKJ / currentDailyLimit) * 100, 100)}%` }}
                                     />
                                 </div>
                                 <div className="progress-text">
-                                    {showCalories ? `${Math.round(totalKJ / 4.184).toLocaleString()} / ${Math.round(DAILY_LIMIT / 4.184).toLocaleString()} calories` : `${totalKJ.toLocaleString()} / ${DAILY_LIMIT.toLocaleString()} kJ`}
+                                    {showCalories ? `${Math.round(totalKJ / 4.184).toLocaleString()} / ${Math.round(currentDailyLimit / 4.184).toLocaleString()} calories` : `${totalKJ.toLocaleString()} / ${currentDailyLimit.toLocaleString()} kJ`}
                                 </div>
                             </div>
 
