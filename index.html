@@ -24,7 +24,7 @@
         .card { 
             background: linear-gradient(145deg, #f2f8ff, #edf5ff);
             border-radius: 1.5rem; 
-            box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.7);
+            box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6), -9px -9px 16px rgba(255, 255, 255, 0.5);
             padding: 1.5rem; 
             margin-bottom: 1.5rem; 
         }
@@ -39,7 +39,7 @@
             transition: all 0.3s; 
             background: linear-gradient(145deg, #f2f8ff, #edf5ff);
             color: #6b7280;
-            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.7);
+            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.5);
         }
         .tab:active { 
             box-shadow: inset 3px 3px 7px rgba(163, 177, 198, 0.6), inset -3px -3px 7px rgba(255, 255, 255, 0.5);
@@ -49,8 +49,22 @@
             color: #4f46e5; 
             box-shadow: inset 3px 3px 7px rgba(163, 177, 198, 0.6), inset -3px -3px 7px rgba(255, 255, 255, 0.5);
         }
-        .remaining-display { text-align: center; }
-        .remaining-label { color: #6b7280; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .remaining-display { text-align: center; position: relative; }
+        .remaining-label { color: #6b7280; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+        .unit-toggle { 
+            background: linear-gradient(145deg, #d8e7f7, #d3e2f4);
+            border: none;
+            color: #6b7280;
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            box-shadow: 2px 2px 4px rgba(163, 177, 198, 0.4), -2px -2px 4px rgba(255, 255, 255, 0.6);
+        }
+        .unit-toggle:active {
+            box-shadow: inset 2px 2px 4px rgba(163, 177, 198, 0.4), inset -2px -2px 4px rgba(255, 255, 255, 0.6);
+        }
         .remaining-value { font-size: 3rem; font-weight: 700; }
         .remaining-value.positive { 
             background: linear-gradient(135deg, #22c55e, #16a34a);
@@ -94,7 +108,7 @@
             transition: all 0.2s; 
             background: linear-gradient(145deg, #f2f8ff, #edf5ff);
             color: #374151;
-            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.7);
+            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.5);
             text-transform: uppercase;
             font-size: 0.75rem;
             letter-spacing: 0.05em;
@@ -134,7 +148,7 @@
             justify-content: center; 
             gap: 0.5rem; 
             margin-top: 1rem;
-            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.7);
+            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.5);
         }
         .btn-primary:active { 
             box-shadow: inset 3px 3px 7px rgba(105, 135, 254, 0.8), inset -3px -3px 7px rgba(132, 158, 254, 0.8);
@@ -147,7 +161,7 @@
             background: linear-gradient(145deg, #f2f8ff, #edf5ff);
             border-radius: 0.75rem; 
             margin-bottom: 0.75rem;
-            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.7);
+            box-shadow: 5px 5px 10px rgba(163, 177, 198, 0.6), -5px -5px 10px rgba(255, 255, 255, 0.5);
         }
         .meal-info { display: flex; align-items: center; gap: 0.75rem; }
         .meal-emoji { font-size: 1.5rem; }
@@ -165,7 +179,7 @@
             cursor: pointer; 
             padding: 0.5rem;
             border-radius: 0.5rem;
-            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.7);
+            box-shadow: 3px 3px 6px rgba(163, 177, 198, 0.6), -3px -3px 6px rgba(255, 255, 255, 0.5);
         }
         .btn-delete:active { 
             box-shadow: inset 2px 2px 5px rgba(163, 177, 198, 0.6), inset -2px -2px 5px rgba(255, 255, 255, 0.5);
@@ -293,6 +307,7 @@
             const [weightEntries, setWeightEntries] = useState([]);
             const [newWeight, setNewWeight] = useState('');
             const [showWeightSection, setShowWeightSection] = useState(false);
+            const [showCalories, setShowCalories] = useState(false);
 
             useEffect(() => {
                 loadMeals();
@@ -445,11 +460,16 @@
                     {!showWeightSection ? (
                         <>
                             <div className="card remaining-display">
-                                <div className="remaining-label">Remaining Today</div>
-                                <div className={`remaining-value ${remaining >= 0 ? 'positive' : 'negative'}`}>
-                                    {remaining.toLocaleString()}
+                                <div className="remaining-label">
+                                    Remaining Today
+                                    <button onClick={() => setShowCalories(!showCalories)} className="unit-toggle">
+                                        {showCalories ? 'kJ' : 'cal'}
+                                    </button>
                                 </div>
-                                <div className="remaining-unit">kJ</div>
+                                <div className={`remaining-value ${remaining >= 0 ? 'positive' : 'negative'}`}>
+                                    {showCalories ? Math.round(remaining / 4.184).toLocaleString() : remaining.toLocaleString()}
+                                </div>
+                                <div className="remaining-unit">{showCalories ? 'calories' : 'kJ'}</div>
                                 <div className="progress-bar">
                                     <div 
                                         className={`progress-fill ${totalKJ > DAILY_LIMIT ? 'over' : 'good'}`}
@@ -457,7 +477,7 @@
                                     />
                                 </div>
                                 <div className="progress-text">
-                                    {totalKJ.toLocaleString()} / {DAILY_LIMIT.toLocaleString()} kJ
+                                    {showCalories ? `${Math.round(totalKJ / 4.184).toLocaleString()} / ${Math.round(DAILY_LIMIT / 4.184).toLocaleString()} calories` : `${totalKJ.toLocaleString()} / ${DAILY_LIMIT.toLocaleString()} kJ`}
                                 </div>
                             </div>
 
